@@ -83,7 +83,7 @@ test_dataloader = dict(
         type=test_dataset_type,
         metainfo=dict(classes=('building,')),
         data_root=data_root,
-        ann_file=data_root + 'annotations/bigdata_test.json',
+        ann_file='annotations/bigdata_test.json',
         data_prefix=dict(img='images/bigdata_test/'),
         test_mode=True,
         pipeline=test_pipeline))
