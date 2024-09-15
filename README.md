@@ -18,7 +18,7 @@ $ pip install -v -e .
 To align with the COCO annotation format, it is required to slightly modify the annotations provided by the competition organizer and save them in the `data/annotations` directory. Please download the competition dataset from [this link](https://www.kaggle.com/competitions/building-extraction-generalization-2024/data) and modify them as follows:
 
 ```
-$ python python prepare_bigdata.py --data_path path/to/dataset --save_path data
+$ python prepare_bigdata.py --data_path path/to/dataset --save_path data
 ```
 
 The modified annotations are stored in the `data/annotations` directory, and the images are copied to the `data/images` directory.
@@ -26,7 +26,7 @@ The modified annotations are stored in the `data/annotations` directory, and the
 Additionally, we used an external dataset, [the Alabama Buildings Segmentation dataset](https://www.kaggle.com/datasets/meowmeowplus/alabama-buildings-segmentation). After downloading the dataset, please generate the annotation data with the following command:
 
 ```
-$ python python prepare_alabama.py --data_path path/to/dataset --save_path data
+$ python prepare_alabama.py --data_path path/to/dataset --save_path data
 ```
 
 The final folder structure becomes as follows:
