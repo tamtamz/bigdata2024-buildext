@@ -1,6 +1,6 @@
 # IEEE BigData Cup 2024: Building Extraction
 
-This repository contains the source code for the competition scheduled to be held in IEEE BigData conference in 2024, [IEEE BigData Cup 2024: Building Extraction](https://www.kaggle.com/competitions/building-extraction-generalization-2024). Our model secured the second position in the competition.
+This repository contains the source code for the competition scheduled to be held in IEEE BigData conference in 2024, [IEEE BigData Cup 2024: Building Extraction](https://www.kaggle.com/competitions/building-extraction-generalization-2024). Our model secured the second position in the competition leaderboard.
 
 The source code is based on the [MMDetection framework](https://github.com/open-mmlab/mmdetection). We will provide instructions on how to train a model for the building extraction competition and test the trained model.
 
@@ -49,9 +49,9 @@ The final folder structure becomes as follows:
           └── alabama.json
 ```
 
-### Pretrained model
+### Initialization parameters
 
-The model is initialized with the COCO pretrained model. Please download the pretrained parameters from [this link](https://download.openmmlab.com/mmdetection/v3.0/rtmdet/rtmdet-ins_x_8xb16-300e_coco/rtmdet-ins_x_8xb16-300e_coco_20221124_111313-33d4595b.pth) and store it in the top of the directory as follows:
+The model is initialized with the COCO pretrained model. Please download the parameters pretrained with the COCO dataset from [this link](https://download.openmmlab.com/mmdetection/v3.0/rtmdet/rtmdet-ins_x_8xb16-300e_coco/rtmdet-ins_x_8xb16-300e_coco_20221124_111313-33d4595b.pth) and store it in the top of the directory as follows:
 ```
 .
 ├── configs
@@ -60,6 +60,10 @@ The model is initialized with the COCO pretrained model. Please download the pre
 ├── rtmdet-ins_x_8xb16-300e_coco_20221124_111313-33d4595b.pth
 : 
 ```
+
+### Pretrained model
+
+If you want to test our model without training it, you can download the pretrained model parameters from [this link](https://github.com/tamtamz/bigdata2024-buildext/releases/download/v1.0.0/rtm_ins_x.pth).
 
 ## Training
 
@@ -83,7 +87,7 @@ After training is complete, you can evaluate the model using the test set. The f
 
 ```bash
 $ python tools/test.py \
-      work_dirs/rtmdet-ins_x_allaug_alabama_val/rtmdet-ins_x_allaug_alabama_val.py \
+      configs/building/rtmdet-ins_x_allaug_alabama_val.py \
       work_dirs/rtmdet-ins_x_allaug_alabama_val/epoch_24.pth \
       --work-dir pred_test \
       --out pred_test/dets.pkl
