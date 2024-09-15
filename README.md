@@ -15,13 +15,21 @@ $ pip install -v -e .
 
 ### Image and annotations
 
-To follow the COCO annotation format, we slightly changed the annotations provided from the competition organizer and placed the annotation files in `data/annotaitons`. Please download the competition dataset from [here]() and place the images in the `data/images` directory. The directory names must be changed as shown in the folder structure below.
+To align with the COCO annotation format, it is required to slightly modify the annotations provided by the competition organizer and save them in the `data/annotations` directory. Please download the competition dataset from [this link](https://www.kaggle.com/competitions/building-extraction-generalization-2024/data) and modify them as follows:
 
-We also used an external dataset, namely [the Alabama dataset](). We placed the annotation data for the Alabama dataset in the `data/annotations` directory. Please download the dataset and place the images as shown in the folder structure below.
+```
+$ python python prepare_bigdata.py --data_path path/to/dataset --save_path data
+```
 
-To align with the COCO annotation format, we made slight modifications to the annotations provided by the competition organizer and saved them in the `data/annotations` directory. You can download the competition dataset from [this link](https://www.kaggle.com/competitions/building-extraction-generalization-2024/data) and store the images in the `data/images` directory. Ensure that the directory names match the structure shown below.
+The modified annotations are stored in the `data/annotations` directory, and the images are copied to the `data/images` directory.
 
-Additionally, we used an external dataset, [the Alabama Buildings Segmentation dataset](https://www.kaggle.com/datasets/meowmeowplus/alabama-buildings-segmentation). The annotation file for the Alabama dataset is placed in the `data/annotations` directory. Download the dataset and arrange the images according to the folder structure below.
+Additionally, we used an external dataset, [the Alabama Buildings Segmentation dataset](https://www.kaggle.com/datasets/meowmeowplus/alabama-buildings-segmentation). After downloading the dataset, please generate the annotation data with the following command:
+
+```
+$ python python prepare_alabama.py --data_path path/to/dataset --save_path data
+```
+
+The final folder structure becomes as follows:
 
 ```
 .

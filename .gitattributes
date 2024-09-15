@@ -1,4 +1,0 @@
-data/annotations/bigdata_test.json filter=lfs diff=lfs merge=lfs -text
-data/annotations/bigdata_train.json filter=lfs diff=lfs merge=lfs -text
-data/annotations/bigdata_val.json filter=lfs diff=lfs merge=lfs -text
-data/annotations/alabama.json filter=lfs diff=lfs merge=lfs -text
