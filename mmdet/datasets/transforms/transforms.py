@@ -2736,51 +2736,11 @@ class MixUp(BaseTransform):
 
 @TRANSFORMS.register_module()
 class RandomAffine(BaseTransform):
-    """Random affine transform data augmentation.
-
-    This operation randomly generates affine transform matrix which including
-    rotation, translation, shear and scaling transforms.
-
-    Required Keys:
-
-    - img
-    - gt_bboxes (BaseBoxes[torch.float32]) (optional)
-    - gt_bboxes_labels (np.int64) (optional)
-    - gt_ignore_flags (bool) (optional)
-
-    Modified Keys:
-
-    - img
-    - img_shape
-    - gt_bboxes (optional)
-    - gt_bboxes_labels (optional)
-    - gt_ignore_flags (optional)
-
-    Args:
-        max_rotate_degree (float): Maximum degrees of rotation transform.
-            Defaults to 10.
-        max_translate_ratio (float): Maximum ratio of translation.
-            Defaults to 0.1.
-        scaling_ratio_range (tuple[float]): Min and max ratio of
-            scaling transform. Defaults to (0.5, 1.5).
-        max_shear_degree (float): Maximum degrees of shear
-            transform. Defaults to 2.
-        border (tuple[int]): Distance from width and height sides of input
-            image to adjust output shape. Only used in mosaic dataset.
-            Defaults to (0, 0).
-        border_val (tuple[int]): Border padding values of 3 channels.
-            Defaults to (114, 114, 114).
-        bbox_clip_border (bool, optional): Whether to clip the objects outside
-            the border of the image. In some dataset like MOT17, the gt bboxes
-            are allowed to cross the border of images. Therefore, we don't
-            need to clip the gt bboxes in these cases. Defaults to True.
-    """
-
     def __init__(self,
-                 max_rotate_degree: float = 10.0,
-                 max_translate_ratio: float = 0.1,
-                 scaling_ratio_range: Tuple[float, float] = (0.5, 1.5),
-                 max_shear_degree: float = 2.0,
+                 max_rotate_degree: float = 180.0,
+                 max_translate_ratio: float = 0.0,
+                 scaling_ratio_range: Tuple[float, float] = (0.8, 1.2),
+                 max_shear_degree: float = 10.0,
                  border: Tuple[int, int] = (0, 0),
                  border_val: Tuple[int, int, int] = (114, 114, 114),
                  bbox_clip_border: bool = True) -> None:
@@ -2800,7 +2760,7 @@ class RandomAffine(BaseTransform):
         # Rotation
         rotation_degree = random.uniform(-self.max_rotate_degree,
                                          self.max_rotate_degree)
-        rotation_matrix = self._get_rotation_matrix(rotation_degree)
+        rotation_matrix = self._get_rotation_matrix(rotation_degree, height , width)
 
         # Scaling
         scaling_ratio = random.uniform(self.scaling_ratio_range[0],
@@ -2822,8 +2782,8 @@ class RandomAffine(BaseTransform):
         translate_matrix = self._get_translation_matrix(trans_x, trans_y)
 
         warp_matrix = (
-            translate_matrix @ shear_matrix @ rotation_matrix @ scaling_matrix)
-        return warp_matrix
+            translate_matrix @ shear_matrix @ scaling_matrix @ rotation_matrix)
+        return warp_matrix    
 
     @autocast_box_type()
     def transform(self, results: dict) -> dict:
@@ -2840,23 +2800,29 @@ class RandomAffine(BaseTransform):
             borderValue=self.border_val)
         results['img'] = img
         results['img_shape'] = img.shape[:2]
+        results['orig_shape'] = img.shape[:2]
 
-        bboxes = results['gt_bboxes']
-        num_bboxes = len(bboxes)
-        if num_bboxes:
-            bboxes.project_(warp_matrix)
-            if self.bbox_clip_border:
-                bboxes.clip_([height, width])
-            # remove outside bbox
-            valid_index = bboxes.is_inside([height, width]).numpy()
-            results['gt_bboxes'] = bboxes[valid_index]
-            results['gt_bboxes_labels'] = results['gt_bboxes_labels'][
-                valid_index]
-            results['gt_ignore_flags'] = results['gt_ignore_flags'][
-                valid_index]
+        for instance in results['instances']:
+            xmin = img.shape[1]
+            ymin = img.shape[0]
+            xmax = 0
+            ymax = 0
+            for i in range(len(instance['mask'])):
+                mask = instance['mask'][i]
+                mask = np.array(mask).reshape((-1, 2))
+                vertices = np.concatenate((mask, np.ones((*mask.shape[:-1], 1))), axis=-1)
+                vertices_T = np.transpose(vertices, axes=(-1, -2))
+                vertices_T = np.matmul(warp_matrix, vertices_T)
+                vertices = np.transpose(vertices_T, axes=(-1, -2))
+                vertices = vertices[..., :2] / vertices[:, 2:3]
+                xmin = min(xmin, vertices[:, 0].min().item())
+                ymin = min(ymin, vertices[:, 1].min().item())
+                xmax = max(xmax, vertices[:, 0].max().item())
+                ymax = max(ymax, vertices[:, 1].max().item())
+                instance['mask'][i] = vertices.reshape((-1,)).tolist()
+            
+            instance['bbox'] = [int(xmin), int(ymin), int(xmax), int(ymax)]
 
-            if 'gt_masks' in results:
-                raise NotImplementedError('RandomAffine only supports bbox.')
         return results
 
     def __repr__(self):
@@ -2871,13 +2837,13 @@ class RandomAffine(BaseTransform):
         return repr_str
 
     @staticmethod
-    def _get_rotation_matrix(rotate_degrees: float) -> np.ndarray:
-        radian = math.radians(rotate_degrees)
-        rotation_matrix = np.array(
-            [[np.cos(radian), -np.sin(radian), 0.],
-             [np.sin(radian), np.cos(radian), 0.], [0., 0., 1.]],
+    def _get_rotation_matrix(rotate_degrees: float, height:int, width: int) -> np.ndarray:
+        center = ((width - 1) * 0.5, (height - 1) * 0.5)
+        cv2_rotation_matrix = cv2.getRotationMatrix2D(center, -rotate_degrees, 1.0)
+        return np.concatenate(
+            [cv2_rotation_matrix,
+             np.array([0, 0, 1]).reshape((1, 3))],
             dtype=np.float32)
-        return rotation_matrix
 
     @staticmethod
     def _get_scaling_matrix(scale_ratio: float) -> np.ndarray:
